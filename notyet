@@ -1,0 +1,226 @@
+#!/usr/bin/env ruby
+# notyet [-a] [-f FILE] [FILTER] - a todo tracker
+
+require 'date'
+
+class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
+  def reindent(change)
+    self.depth += change
+    children.each { |c| c.reindent change }
+    self
+  end
+
+  def dump
+    unless $show_all
+      return  if "xX".index(state)
+      return  if count("xX") == count
+    end
+
+    if depth < 0
+      puts "#{desc.strip} [#{count("xX")}/#{count("-xX")}]".lstrip  unless $edit
+    else
+      stat = children.empty? ? "" : " [#{count("xX")}/#{count("-xX")}]"
+      print "#{file}:#{line}\t"  if $edit && depth >= 0
+      print "#{" " * depth}#{state} #{desc}#{stat}\n"  if depth >= 0
+    end
+
+    children.each { |c| c.dump }
+  end
+
+  def count(s=nil)
+    n = 0
+    if s.nil? || s.index(state)
+      n += 1
+    end
+
+    if desc =~ /^#(include|exec)\s/ || depth < 0
+      n -= 1  if n > 0
+    end
+
+    children.each { |c| n += c.count(s) }
+
+    n
+  end
+
+  def sort
+    children.each { |c| c.sort }
+    children.sort_by! { |c| [c.state, c.desc] }
+  end
+
+  def propagate
+    unless children.empty?
+      children.each { |c| c.propagate }
+      if children.all? { |c| "X".index(c.state) }
+        self.state = "X"
+      elsif children.all? { |c| "xX".index(c.state) }
+        self.state = "x"
+      elsif children.all? { |c| "?xX".index(c.state) }
+        self.state = "?"
+      end
+
+      if state == "x"
+        force("x")
+      elsif state == "?"
+        force("?")
+      end
+
+      soonest = children.map { |c|
+        "-?".index(c.state) &&
+          c.desc[/^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/, 1] 
+      }.compact.min
+      if soonest
+        diff = "%+d" % (Date.parse(soonest) - Date.today)
+        self.desc = "#{soonest} {#{diff}} #{desc}"
+      end
+    end
+  end
+
+  def force(state)
+    self.state = state  unless "X?".index(state)
+    children.each { |c| c.force(state) }
+  end
+
+  # remove two layers of parents
+  def splat
+    self.children = children.map { |c|
+      c.splat
+
+      if c.desc == "#splat" && !c.children.empty?
+        sub = c.children.map { |cc| cc.children }.flatten
+        rel = sub.first.depth - c.depth
+        sub.map { |cc| cc.reindent(-rel) }
+      else
+        [c]
+      end
+    }.flatten(1)
+  end
+
+  def match1(word)
+    desc =~ %r{(^|\W)#{Regexp.quote word.to_s}($|\W)}
+  end
+
+  def match(word)
+    # need to match all non-@ words, and one of the mentioned @-words (if any)
+    tags, words = word.partition { |w| w =~ /^@/ }
+    (tags.empty? || tags.any? { |w| match1(w) }) && words.all? { |w| match1(w) }
+  end
+
+  def rmatch(word)
+    match(word) || children.any? { |c| c.rmatch(word) }
+  end
+
+  def filter(word)
+    if !match(word)
+      children.reject! { |c| !c.rmatch(word) }
+      children.each { |c| c.filter(word) }
+    end
+  end
+end
+
+def parse(io, filename=nil)
+  todos = [Entry.new(-1, "/", "", "", 0, [])]
+
+  filter = (io.stat.ftype != "file")
+
+  while line = io.gets
+    if filter && line =~ /^(.*):(\d+)\t/
+      fname, lineno, line = $1, $2.to_i, $'
+    else
+      fname, lineno = filename, io.lineno
+    end
+
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+      i, state, desc = $1.size, $2, $3
+      while i <= todos.last.depth
+        todos.pop
+      end
+
+      children = []
+
+      if desc =~ /^#exec\s+(.+)/
+# - error handling for #exec
+        IO.popen($1) { |f|
+          sub = parse(f, $1)
+          sub.reindent(i+2)
+          children = sub.children
+        }
+        next  if children.empty?
+      elsif desc =~ /^#include\s+(\S+)/
+        File.open(File.expand_path($1)) { |f|
+          sub = parse(f, $1)
+          sub.reindent(i+2)
+          children = sub.children
+        }
+        next  if children.empty?
+      elsif desc =~ /^#includeall\s+(\S+)/
+        Dir.glob(File.expand_path($1)) { |file|
+          File.open(file) { |f|
+            sub = parse(f, $1)
+            sub.reindent(i+4)
+            children << Entry.new(i+2, state, "#include #{file}", fname, lineno, sub.children)
+          }
+        }
+        next  if children.empty?
+      end
+     
+      e = Entry.new(i, state, desc, fname, lineno, children)
+      todos.last.children << e
+      todos << e
+    end
+  end
+
+  todos.first
+end
+
+files = []
+filter = []
+$show_all = $edit = false
+ARGV.each_with_index { |arg, i|
+  case arg
+  when "-a"; $show_all = true
+  when "-f"; files << ARGV.delete_at(i+1)
+  when "-e"; $edit = true
+  when /^-/; abort "Usage: notyet XXX"
+  else filter << arg
+  end
+}
+
+
+files = [File.expand_path("~/.notyet")]  if files.empty?
+
+t = nil
+files.each { |file|
+  File.open(file) { |f|
+    d = parse(f, file)
+    if t
+      t.children.concat d.children
+    else
+      t = d
+    end
+  }
+}
+
+t.splat
+t.propagate
+t.sort
+t.filter(filter)
+
+if $edit && STDOUT.tty?
+  rd, wr = IO.pipe
+  $stdout = wr
+  Process.spawn('vim',
+                '+nmap <CR> ^<C-W>F',
+                '+nmap <TAB> <CR>',
+                '+set nomod nowrap conceallevel=3 concealcursor=nc',
+                '+syn match Conceal /^.\{-}\t/ conceal',
+                '+syn match Comment /\t\s*[xX].*/lc=1',
+                '+hi Comment cterm=NONE ctermfg=darkgrey ctermbg=NONE guifg=#777777 guibg=NONE',
+                '-',
+                0 => rd)
+  t.dump
+  $stdout.close
+  Process.wait
+  exit $?.exitstatus
+else
+  t.dump
+end
