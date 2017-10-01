@@ -33,18 +33,11 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   end
 
   def count(s=nil)
-    n = 0
-    if s.nil? || s.index(state)
-      n += 1
+    if children.empty? && (s.nil? || s.index(state))
+      return 1
+    else
+      children.map { |c| c.count(s) }.sum
     end
-
-    if desc =~ /^#(include|exec)\s/ || depth < 0
-      n -= 1  if n > 0
-    end
-
-    children.each { |c| n += c.count(s) }
-
-    n
   end
 
   def sort
