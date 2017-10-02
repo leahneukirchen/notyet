@@ -7,6 +7,7 @@
 # http://creativecommons.org/publicdomain/zero/1.0/
 
 require 'date'
+TODAY = Date.today
 
 class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   def reindent(change)
@@ -62,13 +63,18 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
         force("?")
       end
 
-      soonest = children.map { |c|
-        "-?".index(c.state) &&
-          c.desc[/^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/, 1] 
-      }.compact.min
-      if soonest
-        diff = "%+d" % (Date.parse(soonest) - Date.today)
-        self.desc = "#{soonest} {#{diff}} #{desc}"
+      if desc =~ /^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/
+        diff = "%+d" % (Date.parse($1) - TODAY)
+        self.desc = "#{$1} {#{diff}}#{$'}"
+      else
+        soonest = children.map { |c|
+          "-?".index(c.state) &&
+            c.desc[/^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/, 1]
+        }.compact.min
+        if soonest
+          diff = "%+d" % (Date.parse(soonest) - TODAY)
+          self.desc = "#{soonest} {#{diff}} #{desc}"
+        end
       end
     end
   end
