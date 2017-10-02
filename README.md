@@ -47,6 +47,53 @@ use `-f` to override) and *aggregate the tasks*:
 The result is printed as a tree, so you quickly see what you still
 need to do.
 
+## Example
+
+Consider this plan of a birthday party:
+
+```
+x buy a present
+- invite guests
+  x Estalla
+  - Zebby
+  - Orraleen
+  ? Xana
+- 2017-10-16 birthday cake
+  ? sprinkles
+  - flour
+  - sugar
+  x chocolate
+  x 1tsp salt
+  - eggs
+  X banana
+```
+
+We have three tasks, two of which have subtasks.  We bought a present
+already.  We need to invite two more guests, Zebby and Orraleen, and
+we don't know yet whether to invite Xana too.  The birthday cake needs
+to be done by October 16, 2017.  We need to buy flour, sugar, and
+eggs.  We already have chocolate and salt for it; and we certainly
+won't put bananas into it.  Perhaps, we'll put sprinkles on top, if we
+can find some.
+
+To get an overview of what remains to do, we run:
+
+```
+% notyet -f party.ny
+2017-10-16 {+14} [3/10]
+- 2017-10-16 {+14} birthday cake [2/6]
+  - eggs
+  - flour
+  - sugar
+  ? sprinkles
+- invite guests [1/3]
+  - Orraleen
+  - Zebby
+  ? Xana
+```
+
+The done tasks are hidden, and we know we have 14 days left to bake the cake.
+
 ## Special directives
 
 When a task description starts with a special directive, additional
