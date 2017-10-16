@@ -213,7 +213,7 @@ if $edit && STDOUT.tty?
   rd, wr = IO.pipe
   $stdout = wr
   Process.spawn('vim',
-                '+nmap <CR> ^<C-W>F<C-W>_',
+                '+nmap <CR> ^gF',
                 '+nmap <TAB> <CR>',
                 '+set nomod nowrap conceallevel=3 concealcursor=nc',
                 '+syn match Conceal /^.\{-}\t/ conceal',
