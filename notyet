@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
-# notyet [-a] [-c] [-e] [-f FILE] [FILTER] - a todo tracker
+# notyet [-ace] [-f FILE] [FILTERS...] - a todo tracker
 #
 # notyet is in the public domain.
 # To the extent possible under law, Leah Neukirchen <leah@vuxu.org>
 # has waived all copyright and related or neighboring rights to this work.
 # http://creativecommons.org/publicdomain/zero/1.0/
 
+require 'optionparser'
 require 'date'
 TODAY = Date.today
 
@@ -180,17 +181,15 @@ files = []
 filter = []
 $show_all = $edit = false
 count_only = false
-ARGV.each_with_index { |arg, i|
-  case arg
-  when "-a"; $show_all = true
-  when "-c"; count_only = true
-  when "-f"; files << ARGV.delete_at(i+1)
-  when "-e"; $edit = true
-  when /^-/; abort "Usage: notyet XXX"
-  else filter << arg
-  end
-}
 
+opt_parser = OptionParser.new { |opts|
+  opts.banner = "Usage: notyet [-ace] [-f FILE] [FILTERS...]"
+  opts.summary_width = 9
+  opts.on("-a", "show all tasks (default: open tasks only)") { $show_all = true }
+  opts.on("-c", "only show total count") { count_only = true }
+  opts.on("-f FILE", "read tasks from FILE (default ~/.notyet)") { |f| files << f }
+  opts.on("-e", "edit tasks in vim") { $edit = true }
+}.parse! ARGV
 
 files = [File.expand_path("~/.notyet")]  if files.empty?
 
@@ -209,7 +208,7 @@ files.each { |file|
 t.splat
 t.propagate
 t.sort
-t.filter(filter)
+t.filter(ARGV)
 
 if count_only
   puts "#{t.count("xX")}/#{t.count("-xX")}"
