@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# notyet [-a] [-e] [-f FILE] [FILTER] - a todo tracker
+# notyet [-a] [-c] [-e] [-f FILE] [FILTER] - a todo tracker
 #
 # notyet is in the public domain.
 # To the extent possible under law, Leah Neukirchen <leah@vuxu.org>
@@ -179,9 +179,11 @@ end
 files = []
 filter = []
 $show_all = $edit = false
+count_only = false
 ARGV.each_with_index { |arg, i|
   case arg
   when "-a"; $show_all = true
+  when "-c"; count_only = true
   when "-f"; files << ARGV.delete_at(i+1)
   when "-e"; $edit = true
   when /^-/; abort "Usage: notyet XXX"
@@ -208,6 +210,11 @@ t.splat
 t.propagate
 t.sort
 t.filter(filter)
+
+if count_only
+  puts "#{t.count("xX")}/#{t.count("-xX")}"
+  exit
+end
 
 if $edit && STDOUT.tty?
   rd, wr = IO.pipe
