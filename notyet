@@ -81,7 +81,7 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   end
 
   def force(state)
-    self.state = state  unless "X?".index(state)
+    self.state = state  unless "X?".index(self.state)
     children.each { |c| c.force(state) }
   end
 
