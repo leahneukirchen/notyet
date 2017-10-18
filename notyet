@@ -215,6 +215,10 @@ if count_only
   exit
 end
 
+if t.children.empty? && !ARGV.empty?
+  exit 1
+end
+
 if $edit && STDOUT.tty?
   rd, wr = IO.pipe
   $stdout = wr
