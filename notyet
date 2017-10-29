@@ -145,11 +145,15 @@ def parse(io, filename=nil)
       if desc =~ /^#exec\s+(.+)/
 # - error handling for #exec
         Dir.chdir(File.dirname(fname)) {
-          IO.popen($1) { |f|
-            sub = parse(f, $1)
-            sub.reindent(i+2)
-            children = sub.children
-          }
+          begin
+            IO.popen($1) { |f|
+              sub = parse(f, $1)
+              sub.reindent(i+2)
+              children = sub.children
+            }
+          rescue SystemCallError => e
+            children = [Entry.new(i+2, "?", "ERROR: #{e}", fname, lineno, [])]
+          end
         }
         next  if children.empty?
       elsif desc =~ /^#include\s+(\S+)/
