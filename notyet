@@ -153,11 +153,16 @@ def parse(io, filename=nil)
         }
         next  if children.empty?
       elsif desc =~ /^#include\s+(\S+)/
-        File.open(File.expand_path($1, File.dirname(fname))) { |f|
-          sub = parse(f, $1)
-          sub.reindent(i+2)
-          children = sub.children
-        }
+        n = File.expand_path($1, File.dirname(fname))
+        begin
+          File.open(n) { |f|
+            sub = parse(f, $1)
+            sub.reindent(i+2)
+            children = sub.children
+          }
+        rescue SystemCallError => e
+          children = [Entry.new(i+2, "?", "ERROR: #{e}", fname, lineno, [])]
+        end
         next  if children.empty?
       elsif desc =~ /^#includeall\s+(\S+)/
         Dir.glob(File.expand_path($1, File.dirname(fname))) { |file|
