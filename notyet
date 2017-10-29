@@ -144,10 +144,12 @@ def parse(io, filename=nil)
 
       if desc =~ /^#exec\s+(.+)/
 # - error handling for #exec
-        IO.popen($1) { |f|
-          sub = parse(f, $1)
-          sub.reindent(i+2)
-          children = sub.children
+        Dir.chdir(File.dirname(fname)) {
+          IO.popen($1) { |f|
+            sub = parse(f, $1)
+            sub.reindent(i+2)
+            children = sub.children
+          }
         }
         next  if children.empty?
       elsif desc =~ /^#include\s+(\S+)/
