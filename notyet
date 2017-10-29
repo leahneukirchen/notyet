@@ -151,14 +151,14 @@ def parse(io, filename=nil)
         }
         next  if children.empty?
       elsif desc =~ /^#include\s+(\S+)/
-        File.open(File.expand_path($1)) { |f|
+        File.open(File.expand_path($1, File.dirname(fname))) { |f|
           sub = parse(f, $1)
           sub.reindent(i+2)
           children = sub.children
         }
         next  if children.empty?
       elsif desc =~ /^#includeall\s+(\S+)/
-        Dir.glob(File.expand_path($1)) { |file|
+        Dir.glob(File.expand_path($1, File.dirname(fname))) { |file|
           File.open(file) { |f|
             sub = parse(f, $1)
             sub.reindent(i+4)
