@@ -24,14 +24,19 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
     end
 
     if depth < 0
-      puts "#{desc.strip} [#{count("xX")}/#{count("-xX")}]".lstrip  unless $edit
+      puts "#{desc.strip} [#{stat}]".lstrip  unless $edit
     else
-      stat = children.empty? ? "" : " [#{count("xX")}/#{count("-xX")}]"
+      stat = children.empty? ? "" : " [#{self.stat}]"
       print "#{file}:#{line}\t"  if $edit && depth >= 0
       print "#{" " * depth}#{state} #{desc}#{stat}\n"  if depth >= 0
     end
 
     children.each { |c| c.dump }
+  end
+
+  def stat
+    children.each { |c| c.stat }
+    @stat ||= "#{count("xX")}/#{count("-xX")}"
   end
 
   def count(s=nil)
@@ -219,6 +224,7 @@ files.each { |file|
 t.splat
 t.propagate
 t.sort
+t.stat
 t.filter(ARGV)
 
 if count_only
