@@ -90,10 +90,14 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
     self.children = children.map { |c|
       c.splat
 
-      if c.desc == "#splat" && !c.children.empty?
-        sub = c.children.map { |cc| cc.children }.flatten
-        rel = sub.first.depth - c.depth
-        sub.map { |cc| cc.reindent(-rel) }
+      if c.desc == "#splat"
+        if c.children.empty?
+          []
+        else
+          sub = c.children.map { |cc| cc.children }.flatten
+          rel = sub.first.depth - c.depth
+          sub.map { |cc| cc.reindent(-rel) }
+        end
       else
         [c]
       end
@@ -143,7 +147,6 @@ def parse(io, filename=nil)
       children = []
 
       if desc =~ /^#exec\s+(.+)/
-# - error handling for #exec
         Dir.chdir(File.dirname(fname)) {
           begin
             IO.popen($1) { |f|
