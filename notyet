@@ -58,11 +58,7 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
         self.state = "?"
       end
 
-      if state == "x"
-        force("x")
-      elsif state == "?"
-        force("?")
-      end
+      force(state)  if "?xX".index(state)
 
       if desc =~ /^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/
         diff = "%+d" % (Date.parse($1) - TODAY)
