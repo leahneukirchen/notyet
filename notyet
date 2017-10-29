@@ -206,6 +206,7 @@ files = [File.expand_path("~/.notyet")]  if files.empty?
 
 t = nil
 files.each { |file|
+  file = "/dev/stdin"  if file == "-"
   File.open(file) { |f|
     d = parse(f, file)
     if t
