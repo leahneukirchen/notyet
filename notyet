@@ -242,6 +242,9 @@ if $edit && STDOUT.tty?
   Process.spawn('vim',
                 '+nmap <buffer><CR> ^gF',
                 '+nmap <buffer><TAB> <CR>',
+                '+nnoremap <buffer>o ^gFo- |' \
+                 'nnoremap <buffer>x ^gF^rx | nnoremap <buffer>X ^gF^rX |' \
+                 'nnoremap <buffer>- ^gF^r- | nnoremap <buffer>? ^gF^r?',
                 '+setl nomod noma nowrap conceallevel=3 concealcursor=nc',
                 '+syn match Conceal /^.\{-}\t/ conceal',
                 '+syn match Comment /\t\s*[xX].*/lc=1',
