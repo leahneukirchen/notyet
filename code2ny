@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# code2ny - convert fixme markers in source code to notyet todo lists
+
+KEYWORDS = %w[todo hack xxx fixme bug]
+
+kw = /\b#{Regexp.union(KEYWORDS.map(&:upcase))}\b.*/
+
+single = ARGV.size <= 1
+
+fn = nil
+while line = gets
+  if line =~ kw
+    msg = $&
+    msg.gsub!(/\s*\*\/.*/, '')  if line =~ /\/\*/
+
+    if single
+      puts "#{ARGF.filename}:#{ARGF.file.lineno}\t" \
+           "- #{File.basename(ARGF.filename)}:#{msg}"
+    else
+      if ARGF.filename != fn
+        fn = ARGF.filename
+        puts "#{fn}:1\t- #{fn}:"
+      end
+
+      puts "#{fn}:#{ARGF.file.lineno}\t  - #{msg}"
+    end
+  end
+end
