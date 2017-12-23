@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+require 'date'
+TODAY = Date.today
+
+class Entry < Struct.new(:depth, :state, :desc, :force, :children)
+end
+
+def parse(io, filename=nil)
+  todos = [Entry.new(-1, "/", "", nil, [])]
+
+  while line = io.gets
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+      force = nil
+
+      i, state, desc = $1.size, $2, $3
+      while i <= todos.last.depth
+        todos.pop
+      end
+
+      force = "-"  if $always
+
+# - support Rnn/P for limited repetitions?
+      if desc =~ %r{(\d\d\d\d-\d\d-\d\d)(.*)(R/P(\d+Y)?(\d+M)?(\d+W)?(\d+D)?)}
+        date = Date.parse($1)
+
+        before, mid, after = $`, $2, $'
+        spec = $3
+
+        while date <= TODAY
+          date = date.next_year($4.to_i)  if $4
+          date = date.next_month($5.to_i)  if $5
+          date = date.next_day(7 * $6.to_i)  if $6
+          date = date.next_day($7.to_i)  if $7
+
+          force = "-"
+          desc = before + date.iso8601 + mid + spec + after
+        end
+      else
+        todos.reverse_each { |t|
+          if t.force
+            state = t.force
+            break
+          end
+        }
+      end
+
+      state = "-"  if $always
+
+      e = Entry.new(i, state, desc, force, [])
+      todos.last.children << e
+      todos << e
+
+      print " "*e.depth, state, " ", desc, "\n"
+    else
+      puts line
+    end
+  end
+
+  todos.first
+end
+
+$always = false
+if ARGV[0] == "-a"
+  $always = true
+end
+
+parse STDIN
