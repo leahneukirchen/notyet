@@ -209,12 +209,19 @@ opt_parser = OptionParser.new { |opts|
 files = [File.expand_path("~/.notyet")]  if files.empty?
 
 t = nil
+if files.size > 1
+  t = Entry.new(-1, "/", "", "", 0, [])
+end
 files.each { |file|
   file = "/dev/stdin"  if file == "-"
   File.open(file) { |f|
     d = parse(f, file)
     if t
-      t.children.concat d.children
+      d.state = "-"
+      d.desc = file
+      d.reindent(2)
+      d.depth = 0
+      t.children << d
     else
       t = d
     end
