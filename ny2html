@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+require 'date'
+TODAY = Date.today
+
+class Entry < Struct.new(:depth, :state, :desc, :children)
+end
+
+def parse(io, filename=nil)
+  todos = [Entry.new(-1, "/", "", [])]
+
+  while line = io.gets
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+      i, state, desc = $1.size, $2, $3
+      while i <= todos.last.depth
+        todos.pop
+      end
+
+      e = Entry.new(i, state, desc, [])
+      todos.last.children << e
+      todos << e
+    end
+  end
+
+  todos.first
+end
+
+def render(e)
+  puts "<dl><dt>"
+  case e.state
+  when "-"; puts "&#x2610;"
+  when "x"; puts "&#x2611;"
+  when "X"; puts "&#x2612;"
+  when "?"; puts "&#xFF1F;"  # or 2370
+  end
+  puts e.desc.sub(/(^\s*)\(([A-Z])\)/) { $1 + "<b>" + [$2.ord + 9333].pack("U") + "</b>" }.
+         gsub(/(?<=\s)@\w+/, '<i>\&</i>')
+  puts "</dt>"
+  unless e.children.empty?
+    puts "<dd>"
+    e.children.each { |c|
+      render(c)
+    }
+    puts "</dd>"
+  end
+  puts "</dl>"
+end
+
+puts <<EOF
+<!doctype html>
+<meta charset=utf-8>
+EOF
+render(parse(STDIN))
+
