@@ -8,7 +8,10 @@
 
 require 'optionparser'
 require 'date'
+require 'time'
+
 TODAY = Date.today
+NOW = Time.now
 
 class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   def reindent(change)
@@ -49,7 +52,27 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
 
   def sort
     children.each { |c| c.sort }
-    children.sort_by! { |c| [c.state, c.desc] }
+    children.sort_by! { |c| [c.state, c.dateorder, c.desc] }
+  end
+
+  def dateorder
+    if desc =~ /^(?:\(.*?\)\s*)?\[(\d\d\d\d-\d\d-\d\d)( \d\d:\d\d)?\]([+!-]?)/
+      d = Time.parse("#{$1}#{$2}")
+      case $3
+      when "+", ""  # todo (default) = earliest first
+        d - NOW
+      when "-"      # reminder = sort by difference to now
+        (d - NOW).abs
+      when "!"      # deadline, drop after the time
+        if NOW < d
+          d - NOW
+        else
+          Float::INFINITY
+        end
+      end
+    else
+      Float::INFINITY
+    end
   end
 
   def propagate

@@ -32,6 +32,13 @@ I recommend using two spaces for each level.
 
 Additionally, a task can have an assigned date if it starts with the
 ISO format `[YYYY-MM-DD]` or `[YYYY-MM-DD HH:MM]`.
+After such a time stamp, there are three possible markers:
+
+* `+` (or none): a task to be done until this date, priorized by date,
+  i.e. stays on top priority after the date.
+* `-`: a reminder for this date, ordered by *days* to/past the date,
+  i.e. priority sinks after the date.
+* `!`: a task with a hard deadline, with lowest priority after the date.
 
 When you run notyet, it will read the task file (by default `~/.notyet`,
 use `-f` to override) and *aggregate the tasks*:
