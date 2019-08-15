@@ -10,7 +10,7 @@ def parse(io, filename=nil)
   todos = [Entry.new(-1, "/", "", [])]
 
   while line = io.gets
-    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?*])\s+(.*)/
       i, state, desc = $1.size, $2, $3
       while i <= todos.last.depth
         todos.pop
@@ -32,6 +32,7 @@ def render(e)
   when "x"; puts "&#x2611;"
   when "X"; puts "&#x2612;"
   when "?"; puts "&#xFF1F;"  # or 2370
+  when "*"; puts "&#x229e;"
   end
   puts e.desc.sub(/(^\s*)\(([A-Z])\)/) { $1 + "<b>" + [$2.ord + 9333].pack("U") + "</b>" }.
          gsub(/(?<=\s)@\w+/, '<i>\&</i>')

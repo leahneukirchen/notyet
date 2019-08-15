@@ -14,6 +14,7 @@ Tasks can have four different states, represented by the first
 non-whitespace character of the line:
 
 * Open tasks: `-`
+* Started tasks (waiting for / assigned to other people): `*`
 * Maybe tasks: `?`
 * Finished tasks: `x`
 * WONTFIX tasks (tasks you decided not to do): `X`

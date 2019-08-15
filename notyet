@@ -82,7 +82,7 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   end
 
   def force(state)
-    self.state = state  unless "xX?".index(self.state)
+    self.state = state  unless "xX?*".index(self.state)
     children.each { |c| c.force(state) }
   end
 
@@ -139,7 +139,7 @@ def parse(io, filename=nil)
       fname, lineno = filename, io.lineno
     end
 
-    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?*])\s+(.*)/
       i, state, desc = $1.size, $2, $3
       while i <= todos.last.depth
         todos.pop
@@ -235,7 +235,7 @@ t.stat
 t.filter(ARGV)
 
 if count_only
-  puts "#{t.count("xX")}/#{t.count("-xX")}"
+  puts "#{t.count("xX")}/#{t.count("-xX*")}"
   exit
 end
 

@@ -10,7 +10,7 @@ def parse(io, filename=nil)
   todos = [Entry.new(-1, "/", "", nil, [])]
 
   while line = io.gets
-    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?])\s+(.*)/
+    if line =~ /\A(?:\s*(?:#|\/\/)\s)?(\s*)([-xX?*])\s+(.*)/
       force = nil
 
       i, state, desc = $1.size, $2, $3
