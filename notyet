@@ -12,6 +12,7 @@ require 'time'
 
 TODAY = Date.today
 NOW = Time.now
+DEFER_DAYS = 14
 
 class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   def reindent(change)
@@ -56,7 +57,7 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
   end
 
   def dateorder
-    if desc =~ /^(?:\(.*?\)\s*)?\[(\d\d\d\d-\d\d-\d\d)( \d\d:\d\d)?\]([+!-]?)/
+    if desc =~ /^(?:\(.*?\)\s*)?\[(\d\d\d\d-\d\d-\d\d)( \d\d:\d\d)?\]([+!~-]?)/
       d = Time.parse("#{$1}#{$2}")
       case $3
       when "+", ""  # todo (default) = earliest first
@@ -68,6 +69,14 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
           d - NOW
         else
           Float::INFINITY
+        end
+      when "~"        # defer, sink and raise periodically
+        if NOW < d
+          d - NOW
+        else
+          # sawtooth function
+          (DEFER_DAYS -
+           (((TODAY - d.to_date) % (2*DEFER_DAYS)) - DEFER_DAYS).abs) * 24*60*60
         end
       end
     else
