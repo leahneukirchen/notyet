@@ -21,7 +21,7 @@ def parse(io, filename=nil)
       force = "-"  if $always
 
 # - support Rnn/P for limited repetitions?
-      if desc =~ %r{(\d\d\d\d-\d\d-\d\d)(.*)(R/P(\d+Y)?(\d+M)?(\d+W)?(\d+D)?)}
+      if desc =~ %r{\[(\d\d\d\d-\d\d-\d\d)(?: \d\d:\d\d)?\](.*)(R/P(\d+Y)?(\d+M)?(\d+W)?(\d+D)?)}
         date = Date.parse($1)
 
         before, mid, after = $`, $2, $'

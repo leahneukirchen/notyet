@@ -65,17 +65,17 @@ class Entry < Struct.new(:depth, :state, :desc, :file, :line, :children)
 
       force(state)  if "?xX".index(state)
 
-      if desc =~ /^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/
+      if desc =~ /^(?:\(.*?\)\s*)?\[(\d\d\d\d-\d\d-\d\d)( \d\d:\d\d)?\]/
         diff = "%+d" % (Date.parse($1) - TODAY)
-        self.desc = "#{$1} {#{diff}}#{$'}"
+        self.desc = "[#{$1}#{$2}] {#{diff}}#{$'}"
       else
         soonest = children.map { |c|
           "-?".index(c.state) &&
-            c.desc[/^(?:\(.*?\)\s*)?(\d\d\d\d-\d\d-\d\d)/, 1]
+            c.desc[/^(?:\(.*?\)\s*)?\[(\d\d\d\d-\d\d-\d\d)( \d\d:\d\d)?\]/, 1]
         }.compact.min
         if soonest
           diff = "%+d" % (Date.parse(soonest) - TODAY)
-          self.desc = "#{soonest} {#{diff}} #{desc}"
+          self.desc = "[#{soonest}] {#{diff}} #{desc}"
         end
       end
     end

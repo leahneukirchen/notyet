@@ -30,8 +30,8 @@ than the previous task, it is regarded as a subtask.
 notyet has no limit on indentation depth.
 I recommend using two spaces for each level.
 
-Additionally, a task can have a deadline if it starts with the ISO
-format `YYYY-MM-DD`.
+Additionally, a task can have an assigned date if it starts with the
+ISO format `[YYYY-MM-DD]` or `[YYYY-MM-DD HH:MM]`.
 
 When you run notyet, it will read the task file (by default `~/.notyet`,
 use `-f` to override) and *aggregate the tasks*:
@@ -59,7 +59,7 @@ x buy a present
   - Zebby
   - Orraleen
   ? Xana
-- 2017-10-16 birthday cake
+- [2017-10-16] birthday cake
   ? sprinkles
   - flour
   - sugar
@@ -81,8 +81,8 @@ To get an overview of what remains to do, we run:
 
 ```
 % notyet -f party.ny
-2017-10-16 {+14} [3/10]
-- 2017-10-16 {+14} birthday cake [2/6]
+[2017-10-16] {+14} [3/10]
+- [2017-10-16] {+14} birthday cake [2/6]
   - eggs
   - flour
   - sugar
